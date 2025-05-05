@@ -1,22 +1,66 @@
 #!/bin/bash
 
-# Install
-sudo apt-get -y install lolcat
+# --- Variables ---
+lolcat_package="lolcat"
+bashrc_path="$HOME/.bashrc"
+zshrc_path="$HOME/.zshrc"
+bash_config_line="PROMPT_COMMAND='echo -n' && PS1='$(echo \"\$(history 1)\" | lolcat) '"
+zsh_config_line="preexec() { echo \"\$(history 1)\" | lolcat; }"
 
-# Add to .bashrc
-if ! grep -q "lolcat" ~/.bashrc; then
-    echo "Adding lolcat to .bashrc"
-    echo "PROMPT_COMMAND='echo -n' && PS1='$(echo \"\$(history 1)\" | lolcat) '" >> ~/.bashrc
+# --- Functions ---
+
+install_package() {
+    local package_name="$1"
+    echo "Attempting to install $package_name..."
+    if sudo apt-get -y install "$package_name"; then
+        echo "$package_name installed successfully."
+    else
+        echo "Error: Failed to install $package_name. Please check your internet connection and permissions."
+        exit 1
+    fi
+}
+
+configure_shell() {
+    local shell_name="$1"
+    local config_file="$2"
+    local config_line="$3"
+
+    echo "Configuring $shell_name ($config_file)..."
+
+    if grep -q "lolcat" "$config_file"; then
+        echo "$shell_name configuration with lolcat already seems to exist."
+    else
+        echo "Adding configuration to $config_file"
+        echo "$config_line" >> "$config_file"
+        echo "$shell_name configuration added."
+    fi
+}
+
+# --- Main Script ---
+
+# Install lolcat
+install_package "$lolcat_package"
+
+# Configure Bash
+if [ -f "$bashrc_path" ]; then
+    configure_shell "Bash" "$bashrc_path" "$bash_config_line"
+    source "$bashrc_path"
+else
+    echo "Warning: $bashrc_path not found. Skipping Bash configuration."
 fi
 
-# Add to .zshrc
-if ! grep -q "lolcat" ~/.zshrc; then
-    echo "Adding lolcat to .zshrc"
-    echo "preexec() { echo \"\$(history 1)\" | lolcat; }" >> ~/.zshrc
+# Configure Zsh
+if [ -f "$zshrc_path" ]; then
+    configure_shell "Zsh" "$zshrc_path" "$zsh_config_line"
+    source "$zshrc_path"
+else
+     echo "Warning: $zshrc_path not found. Skipping Zsh configuration."
 fi
 
-# Source the config files
-source ~/.bashrc
-source ~/.zshrc
 
-echo "Install and setup complete"
+# Remove unneeded packages
+echo "Removing unneeded packages..."
+sudo apt-get -y autoremove
+echo "Autoremove complete."
+
+echo "Install and setup complete."
