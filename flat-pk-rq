@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Define the list of packages
+# Using a proper array syntax
+packages=(
+  libappstream4
+  libarchive13
+  libc6
+  libcurl3-gnutls
+  libdconf1
+  libfuse3-3
+  libgdk-pixbuf-2.0-0
+  libglib2.0-0
+  libgpgme1        # Corrected from libgpgmet1
+  libjson-glib-1.0-0
+  libmalcontent-0-0
+  libostree-1-1
+  libpolkit-agent-1-0
+  libpolkit-gobject-1-0
+  libseccomp2
+  libsystemd0      # Corrected from libsystemd0_
+  libxau6
+  libzstd1
+  ca-certificates
+  default-dbus-system-bus
+  dbus-system-bus
+  desktop-file-utils
+  hicolor-icon-theme
+  gtk-update-icon-cache
+  libpam-systemd
+  p11-kit
+  polkitd
+  policykit-1      # Use policykit-1 directly, '|' is not needed here
+  shared-mime-info # Corrected from shared-mime-info.
+  xdg-desktop-portal
+  xdg-desktop-portal-gtk
+  xdg-desktop-portal-backend
+  xdg-user-dirs
+  avahi-daemon
+  malcontent-gui
+)
+
+# --- Script Logic ---
+
+echo "Starting package installation..."
+
+# Use sudo apt-get install with the array of packages
+# The -y flag automatically answers yes to prompts
+
+# Option 1: Standard installation (apt-get will skip already installed packages by default)
+# sudo apt-get -y install "${packages[@]}"
+
+# Option 2: More explicit way to handle already installed packages
+# We can leverage apt-get's behavior, it will only install/upgrade if needed.
+# The -y flag handles the confirmation.
+
+# Let's use the simpler and standard approach, which is what apt-get does by default.
+# apt-get will check for dependencies and only install/upgrade what's necessary.
+
+# Add a confirmation step before running sudo
+read -p "This script will install the following packages: ${packages[*]}
+Do you want to proceed? (y/n): " confirm
+
+if [[ "$confirm" =~ ^[Yy]$ ]]; then
+  echo "Running sudo apt-get -y install..."
+  # Execute the installation command
+  sudo apt-get update # Optional: Update package list before installing
+  sudo apt-get -y install "${packages[@]}"
+
+  # Check the exit status of the apt-get command
+  if [ $? -eq 0 ]; then
+    echo "Package installation completed successfully."
+  else
+    echo "Error: Package installation failed."
+    echo "Please check the output above for details."
+    exit 1
+  fi
+else
+  echo "Installation cancelled by user."
+  exit 0
+fi
+
+# The comment "skip already install packages" refers to apt-get's default behavior.
+# apt-get will automatically skip packages that are already installed and up-to-date.
+# If you wanted to *force* a reinstallation, you would use the --reinstall flag,
+# but this is usually not necessary.
+
+exit 0

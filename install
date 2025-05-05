@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# File containing the list of packages to install
+PACKAGE_LIST="installed-packs.txt"
+# File to log packages that did not install
+DID_NOT_INSTALL="did-not-install.txt"
+
+# Clear the did-not-install file
+> "$DID_NOT_INSTALL"
+
+# Warning message
+echo "This will install a large number of packages. Please do not power off your computer, and do not let your computer sleep or hibernate."
+
+# Read the package list and attempt to install each package
+while IFS= read -r package; do
+    # Check if the package is already installed
+    if dpkg -l | grep -q "^ii  $package"; then
+        echo "$package is already installed. Skipping."
+        continue
+    fi
+
+    # Attempt to install the package
+    if sudo apt-get install -y "$package"; then
+        echo "$package installed successfully."
+    else
+        echo "$package failed to install or is installed with another package." >> "$DID_NOT_INSTALL"
+    fi
+done < "$PACKAGE_LIST"
+
+echo "Installation process completed. Check $DID_NOT_INSTALL for any packages that did not install."
+
